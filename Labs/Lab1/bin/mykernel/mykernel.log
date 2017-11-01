@@ -1,0 +1,14 @@
+Compiler Command: aoc -march=emulator mykernel.cl -o bin/mykernel.aocx
+/home/mdiorio/eece-6540-fall2017/Exercises/MatrixMulti/mykernel.cl:3:21: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+    __global float *outputD,
+                    ^
+/home/mdiorio/eece-6540-fall2017/Exercises/MatrixMulti/mykernel.cl:8:21: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+    __global float *inputA,
+                    ^
+/home/mdiorio/eece-6540-fall2017/Exercises/MatrixMulti/mykernel.cl:9:21: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+    __global float *inputB,
+                    ^
+/home/mdiorio/eece-6540-fall2017/Exercises/MatrixMulti/mykernel.cl:10:21: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+    __global float *inputC) 
+                    ^
+4 warnings generated.

@@ -22,12 +22,12 @@ sum = (1.0/(16 * x + 1)) - (1.0/(16 * x + 3)) + (1.0/(16 * x + 5)) -
 	sum += localsum[0];
 	} 
 
+/*Output Final Sum on Last Thread */  
 	if(x == (WorkItems - 1)) {
 	outputD[0] = sum;
 	}
 
 /* Put the sum into local memory for the next x index */ 
 	localsum[0] = sum;  
-
-barrier(CLK_LOCAL_MEM_FENCE);  
+  
 }

@@ -141,9 +141,9 @@ int main()
 
     /* Execute the kernel */
      globalws[0] = WorkItems;
-     localws[0] = 1; 
+     localws[0] = 10;
     ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
-      globalws, localws, 0, NULL, NULL);
+   globalws, localws, 0, NULL, NULL);
     /* it is important to check the return value.
       for example, when enqueueNDRangeKernel may fail when Work group size
       does not divide evenly into global work size */

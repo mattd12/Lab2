@@ -38,9 +38,13 @@ int main()
     char *source_str;
     size_t source_size;
 
-    int WorkItems = 50;  
+/*Plan Work Items, Work Groups, and local group size  */
+    int WorkItems = 4096;   
     float pi = 0.0f;   
-    size_t globalws[1], localws[1]; 
+    size_t globalws[1], localws[1];
+    globalws[0] = WorkItems;
+    localws[0] = 256; 
+    int WorkGroups = globalws[0]/localws[0];
 
 #ifdef __APPLE__
     /* Get Platform and Device Info */
@@ -121,27 +125,32 @@ int main()
     }
 
     /* Create OpenCL Kernel */
-    kernel = clCreateKernel(program, "simpleMultiply", &ret);
+    kernel = clCreateKernel(program, "PiOverFour", &ret);
     if (ret != CL_SUCCESS) {
       printf("Failed to create kernel.\n");
       exit(1);
     }
 
-    float *D = (float *)calloc (1, sizeof(float));
-    printf ("%f", D[0]);
+    float *FinalSum = (float *)calloc (1, sizeof(float));
+    printf ("%f", FinalSum[0]);
     printf("\n");
 
-    /* allocate space for Matrix D on the device */
-    cl_mem bufferD = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+    /* allocate space for FinalSum and WorkGroupMem on the device */
+    cl_mem bufferFinalSum = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
             sizeof(float), NULL, &ret);
 
-    /* Set the kernel arguments */
-    clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&bufferD);
-    clSetKernelArg(kernel, 1, sizeof(cl_int), (void *)&WorkItems);
+    cl_mem bufferWorkGroupMem = clCreateBuffer(context, CL_MEM_READ_WRITE,
+	    sizeof(float) * WorkGroups, NULL, &ret); 
+
+    /* Set the kernel arguments */ 
+    clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&bufferFinalSum);
+    clSetKernelArg(kernel, 1, sizeof(cl_mem), NULL);
+    clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&bufferWorkGroupMem); 
+    clSetKernelArg(kernel, 3, sizeof(cl_int), (void *)&WorkGroups);
+    clSetKernelArg(kernel, 4, sizeof(cl_int), (void *)&localws);
 
     /* Execute the kernel */
-     globalws[0] = WorkItems;
-     localws[0] = 10;
+    
     ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
    globalws, localws, 0, NULL, NULL);
     /* it is important to check the return value.
@@ -153,23 +162,24 @@ int main()
     }
 
     /* Copy the output data back to the host */
-    clEnqueueReadBuffer(command_queue, bufferD, CL_TRUE, 0, sizeof(float),
-	(void *)D, 0, NULL, NULL);
+    clEnqueueReadBuffer(command_queue, bufferFinalSum, CL_TRUE, 0,
+    sizeof(float),(void *)FinalSum, 0, NULL, NULL);
 
     /* Verify result */
 
-      printf ("pi/4 =  %f", D[0]);
+      printf ("pi/4 =  %f", FinalSum[0]);
       printf("\n");
 
-      pi = D[0] * 4;
+      pi = FinalSum[0] * 4;
       printf ("Pi = %f ", pi);
       printf("\n");
 
 
     /* free resources */
-    free(D);
+    free(FinalSum);
 
-    clReleaseMemObject(bufferD);
+    clReleaseMemObject(bufferFinalSum);
+    clReleaseMemObject(bufferWorkGroupMem);
     clReleaseCommandQueue(command_queue);
     clReleaseKernel(kernel);
     clReleaseProgram(program);

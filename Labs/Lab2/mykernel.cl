@@ -1,33 +1,61 @@
-/* widthA=heightB for valid matrix multiplication */
-__kernel void simpleMultiply(
-    __global float *outputD,
-    int WorkItems) 
+/* This kernel calculates and passes back Pi/4. */ 
+/* FinalSum is the overall result of Pi/4. */
+/* WorkItemMem is to store the sum of each work item in local memory. */
+/* WorkGroupMem is to store the sum of each work group into global memory. */
+/* WorkGroups is to iterate through WorkGroupMem for global reduction. */
+/* localws is to iterate through WorkItemMem for local reduction. */
+/* WorkGroups and localws are passed in to the kernel for convienence with */
+/* multiple test cases with varying Work Items, Work Groups, and work items */
+/* per work group. */  
+
+__kernel void PiOverFour(
+    __global float *FinalSum,
+    __local float *WorkItemMem,
+    __global float *WorkGroupMem,
+    int WorkGroups,
+    int localws)
 {
 
-__local float localsum[1]; 
-
- /* get global position in X direction */
-    int x = get_global_id (0);
-
-    float sum = 0.0f; 
+ /* get 1 dimensional global position, local position,
+    and work group position */
+    int x = get_global_id (0); /*Global_Position, x for convienence */
+    int Local_Position = get_local_id (0);
+    int WorkGroup_Position = get_group_id (0);  
+   
+/* Declare accumulating and reduction variables */
+    float sum = 0.0f;
+    float localsum = 0.0f;
+    float globalsum = 0.0f; 
+ 
 
 /* calculate result of pi/4, with 8 elements in one work item */
 sum = (1.0/(16 * x + 1)) - (1.0/(16 * x + 3)) + (1.0/(16 * x + 5)) - 
 	(1.0/(16 * x + 7)) +(1.0/(16 * x + 9)) - (1.0/(16 * x + 11)) +
 	 (1.0/(16 * x + 13)) - (1.0/(16 * x + 15));
 
+/*Store all Work Item Sum Results into Local Memory */ 
+WorkItemMem[Local_Position] = sum; 
 
-/* Add the previous x index to the current x sum */
-	if(x != 0) {  
-	sum += localsum[0];
-	} 
+/* Wait for all local processing to be complete */
+barrier(CLK_LOCAL_MEM_FENCE); 
 
-/*Output Final Sum on Last Thread */  
-	if(x == (WorkItems - 1)) {
-	outputD[0] = sum;
-	}
+/* Perform Local Reduction */
+for(int i = 0; i < (localws - 1); i++){   
+localsum += WorkItemMem[i]; 
+}
 
-/* Put the sum into local memory for the next x index */ 
-	localsum[0] = sum;  
+/* Store all Work Group Sum Results into Global Memory */
+WorkGroupMem[WorkGroup_Position] = localsum; 
+
+/*Wait for all global processing to be complete */
+barrier(CLK_GLOBAL_MEM_FENCE);  
+
+/* Perform Global Reduction */
+for(int j = 0; j < (WorkGroups - 1); j++){
+globalsum += WorkGroupMem[j];
+} 
+
+/*Output Final Sum */  
+FinalSum[0] = globalsum; 
   
 }

@@ -1,1 +1,8 @@
 Compiler Command: aoc -march=emulator mykernel.cl -o bin/mykernel.aocx
+/home/mdiorio/eece-6540-fall2017/Labs/Lab2/mykernel.cl:12:21: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+    __global float *FinalSum,
+                    ^
+/home/mdiorio/eece-6540-fall2017/Labs/Lab2/mykernel.cl:14:21: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+    __global float *WorkGroupMem,
+                    ^
+2 warnings generated.
